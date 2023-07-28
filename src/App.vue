@@ -1,30 +1,82 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
+import { ref, reactive, onMounted } from "vue";
+import Alerta from "./components/Alerta.vue";
+
+const monedas = ref([
+  { codigo: "USD", texto: "Dolar de Estados Unidos" },
+  { codigo: "MXN", texto: "Peso Mexicano" },
+  { codigo: "EUR", texto: "Euro" },
+  { codigo: "GBP", texto: "Libra Esterlina" },
+  { codigo: "COL", texto: "Peso Colombiano" },
+]);
+const criptomonedas = ref([]);
+const error = ref("");
+const cotizar = reactive({
+  moneda: "",
+  criptomoneda: "",
+});
+
+onMounted(() => {
+  const url =
+    "https://min-api.cryptocompare.com/data/top/mktcapfull?limit=20&tsym=USD";
+  fetch(url)
+    .then((respuesta) => respuesta.json())
+    .then(({ Data }) => (criptomonedas.value = Data));
+});
+
+const cotizarCripto = () => {
+  //Cotizar este lleno
+  if (Object.values(cotizar).includes("")) {
+    error.value = "Todos los campos son obligatorios";
+    return;
+  }
+  error.value = "";
+  obtenerCotizacion();
+};
+
+const obtenerCotizacion = async () => {
+  const { moneda, criptomoneda } = cotizar;
+  const url = `https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${criptomoneda}&tsyms=${moneda}`;
+  console.log(url);
+};
 </script>
 
 <template>
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
-  </div>
-  <HelloWorld msg="Vite + Vue" />
-</template>
+  <div class="contenedor">
+    <h1 class="titulo">Cotizador de <span>Criptomonedas</span></h1>
 
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
-</style>
+    <div class="contenido">
+      <Alerta v-if="error">{{ error }}</Alerta>
+      <form class="formulario" @submit.prevent="cotizarCripto">
+        <div class="campo">
+          <label for="monedad">Moneda:</label>
+          <select id="monedad" v-model="cotizar.moneda">
+            <option value="">--Seleccione--</option>
+            <option
+              v-for="moneda in monedas"
+              :key="moneda.codigo"
+              :value="moneda.codigo"
+            >
+              {{ moneda.texto }}
+            </option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="cripto">Criptomoneda:</label>
+          <select id="cripto" v-model="cotizar.criptomoneda">
+            <option value="">--Seleccione--</option>
+            <option
+              v-for="criptomoneda in criptomonedas"
+              :key="criptomoneda.Id"
+              :value="criptomoneda.CoinInfo.name"
+            >
+              {{ criptomoneda.CoinInfo.FullName }}
+            </option>
+          </select>
+        </div>
+
+        <input type="submit" value="Cotizar" />
+      </form>
+    </div>
+  </div>
+</template>
